@@ -1,3 +1,9 @@
+libvsqlitepp (0.3.13-5ps2) trixie; urgency=medium
+
+  * Drop the need for boost::fileysstem
+
+ -- DA7450 <david.accadia@photosentinel.com>  Fri, 03 Oct 2025 17:00:28 +1000
+
 libvsqlitepp (0.3.13-4ps1) trixie; urgency=medium
 
   * Trixie build

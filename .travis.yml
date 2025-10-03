@@ -2,7 +2,7 @@ arch:
     - amd64
     - ppc64le
 language: cpp
-install: sudo apt-get install libboost-dev libsqlite3-dev libboost-filesystem-dev
+install: sudo apt-get install libboost-dev libsqlite3-dev
 compiler:
   - gcc
 # Change this to your needs
