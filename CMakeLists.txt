@@ -13,9 +13,22 @@ set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
 )
 
-find_package(Boost COMPONENTS system filesystem REQUIRED)
-
 find_package(SQLite3 REQUIRED)
+
+# Prefer the standard library filesystem when available (C++17)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Try to find std::filesystem support for older compilers that require linking
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles(
+  "#include <filesystem>\nint main(){ std::filesystem::path p; (void)p; return 0;}"
+  HAVE_STD_FILESYSTEM)
+
+if(NOT HAVE_STD_FILESYSTEM)
+  message(FATAL_ERROR "std::filesystem not available; please use a compiler with C++17 filesystem support")
+endif()
 
 # Compiler-specific C++11 activation.
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -36,7 +49,7 @@ endif ()
 
 if (COMPILER_IS_GNU_COMPATIBLE)
   # Initialize CXXFLAGS.
-  set(CMAKE_CXX_FLAGS                "-Wall -std=c++11 -Werror -Wall -pedantic -W")
+  set(CMAKE_CXX_FLAGS                "-Wall -std=c++17 -Werror -Wall -pedantic -W")
   set(CMAKE_CXX_FLAGS_DEBUG          "-O0 -g")
   set(CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
   set(CMAKE_CXX_FLAGS_RELEASE        "-O3 -DNDEBUG")
@@ -76,9 +89,20 @@ else()
   message(FATAL "Unknown Library type specified: ${LIBRARY_TYPE}")
 endif()
 
-set(VSQLITE_LINK_LIBS ${SQLITE3_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+set(VSQLITE_LINK_LIBS ${SQLITE3_LIBRARIES})
 
-target_link_libraries(vsqlitepp ${VSQLITE_LINK_LIBS})
+target_link_libraries(vsqlitepp PRIVATE ${VSQLITE_LINK_LIBS})
+target_include_directories(vsqlitepp PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+# Link with std::filesystem if the platform requires a separate library (libstdc++fs)
+include(CheckLibraryExists)
+check_library_exists(c++fs std::filesystem "" HAVE_LIB_CXXFS)
+check_library_exists(stdc++fs std::filesystem "" HAVE_LIB_STDCXXFS)
+if(HAVE_LIB_CXXFS)
+  target_link_libraries(vsqlitepp PRIVATE c++fs)
+elseif(HAVE_LIB_STDCXXFS)
+  target_link_libraries(vsqlitepp PRIVATE stdc++fs)
+endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     set_target_properties(vsqlitepp PROPERTIES LINK_FLAGS "-Wl,--no-as-needed")

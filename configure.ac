@@ -5,10 +5,6 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_CXX
 AC_PROG_LIBTOOL
 LT_INIT
-dnl -lboost_system -lboost_filesystem
-
-BOOST_REQUIRE([1.33.0])
-BOOST_FILESYSTEM
 
 dnl -------------------------------------------
 dnl test "$prefix" = "NONE" && prefix=/usr/local
